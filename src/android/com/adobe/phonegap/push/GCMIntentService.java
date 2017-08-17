@@ -67,43 +67,49 @@ public class GCMIntentService extends GcmListenerService implements PushConstant
     public void onMessageReceived(String from, Bundle extras) {
         Log.d(LOG_TAG, "onMessage - from: " + from);
 
-        if (extras != null && isAvailableSender(from)) {
-            Context applicationContext = getApplicationContext();
+        if (FollowApps.isFollowAnalyticsPush(from)) {
+            Log.d(LOG_TAG, extras.get("message").toString());
+            FollowApps.onPushReceived(this, extras.get("message").toString());
+        }
+        else {
+            if (extras != null && isAvailableSender(from)) {
+                Context applicationContext = getApplicationContext();
 
-            SharedPreferences prefs = applicationContext.getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH, Context.MODE_PRIVATE);
-            boolean forceShow = prefs.getBoolean(FORCE_SHOW, false);
-            boolean clearBadge = prefs.getBoolean(CLEAR_BADGE, false);
-            String messageKey = prefs.getString(MESSAGE_KEY, MESSAGE);
-            String titleKey = prefs.getString(TITLE_KEY, TITLE);
+                SharedPreferences prefs = applicationContext.getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH, Context.MODE_PRIVATE);
+                boolean forceShow = prefs.getBoolean(FORCE_SHOW, false);
+                boolean clearBadge = prefs.getBoolean(CLEAR_BADGE, false);
+                String messageKey = prefs.getString(MESSAGE_KEY, MESSAGE);
+                String titleKey = prefs.getString(TITLE_KEY, TITLE);
 
-            extras = normalizeExtras(applicationContext, extras, messageKey, titleKey);
+                extras = normalizeExtras(applicationContext, extras, messageKey, titleKey);
 
-            if (clearBadge) {
-                PushPlugin.setApplicationIconBadgeNumber(getApplicationContext(), 0);
-            }
+                if (clearBadge) {
+                    PushPlugin.setApplicationIconBadgeNumber(getApplicationContext(), 0);
+                }
 
-            // if we are in the foreground and forceShow is `false` only send data
-            if (!forceShow && PushPlugin.isInForeground()) {
-                Log.d(LOG_TAG, "foreground");
-                extras.putBoolean(FOREGROUND, true);
-                extras.putBoolean(COLDSTART, false);
-                PushPlugin.sendExtras(extras);
-            }
-            // if we are in the foreground and forceShow is `true`, force show the notification if the data has at least a message or title
-            else if (forceShow && PushPlugin.isInForeground()) {
-                Log.d(LOG_TAG, "foreground force");
-                extras.putBoolean(FOREGROUND, true);
-                extras.putBoolean(COLDSTART, false);
+                // if we are in the foreground and forceShow is `false` only send data
+                if (!forceShow && PushPlugin.isInForeground()) {
+                    Log.d(LOG_TAG, "foreground");
+                    extras.putBoolean(FOREGROUND, true);
+                    extras.putBoolean(COLDSTART, false);
+                    PushPlugin.sendExtras(extras);
+                }
+                // if we are in the foreground and forceShow is `true`, force show the notification if the data has at least a message or title
+                else if (forceShow && PushPlugin.isInForeground()) {
+                    Log.d(LOG_TAG, "foreground force");
+                    extras.putBoolean(FOREGROUND, true);
+                    extras.putBoolean(COLDSTART, false);
 
-                showNotificationIfPossible(applicationContext, extras);
-            }
-            // if we are not in the foreground always send notification if the data has at least a message or title
-            else {
-                Log.d(LOG_TAG, "background");
-                extras.putBoolean(FOREGROUND, false);
-                extras.putBoolean(COLDSTART, PushPlugin.isActive());
+                    showNotificationIfPossible(applicationContext, extras);
+                }
+                // if we are not in the foreground always send notification if the data has at least a message or title
+                else {
+                    Log.d(LOG_TAG, "background");
+                    extras.putBoolean(FOREGROUND, false);
+                    extras.putBoolean(COLDSTART, PushPlugin.isActive());
 
-                showNotificationIfPossible(applicationContext, extras);
+                    showNotificationIfPossible(applicationContext, extras);
+                }
             }
         }
     }
