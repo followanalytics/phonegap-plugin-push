@@ -28,6 +28,7 @@ import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
 
+import com.followapps.android.FollowApps;
 import com.google.android.gms.gcm.GcmListenerService;
 
 import org.json.JSONArray;
